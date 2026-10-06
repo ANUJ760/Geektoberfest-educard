@@ -180,5 +180,55 @@
         "explanation": "Option A is correct because it directly relates to core concepts of computer science."
       }
     ]
+  },
+  {
+    "id": "f198f6b4-5c44-4ad5-9708-0cf27eb95871",
+    "title": "Mastering Photosynthesis",
+    "description": "AI-generated study deck covering Photosynthesis using uploaded syllabus materials.",
+    "category": "Study Deck",
+    "creator": "EduCards AI",
+    "collaborators": [],
+    "created_at": "2026-10-06T05:00:33.965863+00:00",
+    "updated_at": "2026-10-06T05:00:33.965871+00:00",
+    "cards": [
+      {
+        "id": "4489e9a7-0991-450f-a8aa-d181d7f0fedc",
+        "deck_id": "f198f6b4-5c44-4ad5-9708-0cf27eb95871",
+        "type": "flashcard",
+        "question": "What is key concept 1 of Photosynthesis?",
+        "answer": "Core definition and mechanism of Photosynthesis part 1.",
+        "options": null,
+        "explanation": "This concept is foundational when studying Photosynthesis."
+      },
+      {
+        "id": "46ca8e27-582d-4a76-afee-9baaf294712e",
+        "deck_id": "f198f6b4-5c44-4ad5-9708-0cf27eb95871",
+        "type": "flashcard",
+        "question": "What is key concept 2 of Photosynthesis?",
+        "answer": "Core definition and mechanism of Photosynthesis part 2.",
+        "options": null,
+        "explanation": "This concept is foundational when studying Photosynthesis."
+      },
+      {
+        "id": "3388e0bd-7f00-43bd-8239-6962c44a0db6",
+        "deck_id": "f198f6b4-5c44-4ad5-9708-0cf27eb95871",
+        "type": "flashcard",
+        "question": "What is key concept 3 of Photosynthesis?",
+        "answer": "Core definition and mechanism of Photosynthesis part 3.",
+        "options": null,
+        "explanation": "This concept is foundational when studying Photosynthesis."
+      }
+    ]
+  },
+  {
+    "id": "a9ffcb74-1f4b-4faa-8e93-16c77df8146a",
+    "title": "Math 101",
+    "description": "Basic algebra",
+    "category": "Math",
+    "creator": "Alice",
+    "collaborators": [],
+    "created_at": "2026-10-06T05:00:33.984000+00:00",
+    "updated_at": "2026-10-06T05:00:33.984008+00:00",
+    "cards": []
   }
 ]
