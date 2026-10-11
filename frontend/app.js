@@ -264,22 +264,75 @@ function prevCard() {
   renderCard();
 }
 
+let currentHintLevel = 1;
+
+const HINT_LEVEL_LABELS = {
+  1: "Level 1 of 4: Guiding Question",
+  2: "Level 2 of 4: Conceptual Hint",
+  3: "Level 3 of 4: Partial Worked Step",
+  4: "Level 4 of 4: Full Explanation"
+};
+
 function openExplainerModal() {
   if (!currentWrongContext) return;
+  currentHintLevel = 1;
+  const attemptInput = document.getElementById("hint-learner-attempt");
+  if (attemptInput) attemptInput.value = "";
   document.getElementById("explainer-question-title").innerText = currentWrongContext.question;
-  document.getElementById("explainer-summary").innerText = `You answered "${currentWrongContext.user_answer}". The correct answer is "${currentWrongContext.correct_answer}".`;
+  document.getElementById("explainer-summary").innerText = `You answered "${currentWrongContext.user_answer}".`;
   document.getElementById("explainer-modal").classList.add("active");
-  fetchAiExplanation();
+  fetchAiExplanation(1);
 }
 
 function closeExplainerModal() {
   document.getElementById("explainer-modal").classList.remove("active");
 }
 
-async function fetchAiExplanation() {
+function giveNextHint() {
+  if (currentHintLevel < 4) {
+    currentHintLevel += 1;
+    fetchAiExplanation(currentHintLevel);
+  }
+}
+
+function showFullExplanation() {
+  currentHintLevel = 4;
+  fetchAiExplanation(4);
+}
+
+async function fetchAiExplanation(hintLevel = currentHintLevel) {
   if (!currentWrongContext) return;
+  currentHintLevel = hintLevel;
   const level = document.getElementById("understanding-level").value;
   const explainerText = document.getElementById("explainer-text");
+  const explainerHeader = document.getElementById("explainer-header");
+  const badgeEl = document.getElementById("hint-level-badge");
+  const giveHintBtn = document.getElementById("btn-give-hint");
+  const attemptInput = document.getElementById("hint-learner-attempt");
+  const learnerAttempt = attemptInput ? attemptInput.value.trim() : "";
+
+  if (badgeEl) {
+    badgeEl.innerText = HINT_LEVEL_LABELS[hintLevel] || `Level ${hintLevel}`;
+    badgeEl.style.background = hintLevel === 4 ? "#FEE2E2" : "#CCFBF1";
+    badgeEl.style.color = hintLevel === 4 ? "#991B1B" : "#134E4A";
+  }
+
+  if (explainerHeader) {
+    explainerHeader.innerText = hintLevel === 4 
+      ? "AI Tutor Full Explanation:" 
+      : `AI Tutor Hint (${HINT_LEVEL_LABELS[hintLevel]}):`;
+  }
+
+  if (giveHintBtn) {
+    if (hintLevel < 4) {
+      giveHintBtn.disabled = false;
+      giveHintBtn.innerText = `Give me a hint (Level ${hintLevel + 1})`;
+    } else {
+      giveHintBtn.disabled = true;
+      giveHintBtn.innerText = "Full explanation reached";
+    }
+  }
+
   explainerText.innerText = "Consulting EduCards AI tutor...";
 
   try {
@@ -290,7 +343,9 @@ async function fetchAiExplanation() {
         question: currentWrongContext.question,
         user_answer: currentWrongContext.user_answer,
         correct_answer: currentWrongContext.correct_answer,
-        understanding_level: level
+        understanding_level: level,
+        hint_level: hintLevel,
+        learner_attempt: learnerAttempt || undefined
       })
     });
 

@@ -101,7 +101,8 @@ python -m pytest backend/ -v
 - `POST /api/decks/generate` — Generate study deck using Gen AI & RAG
 - `GET /api/materials` — List uploaded RAG materials
 - `POST /api/materials/upload` — Upload and index a PDF/TXT syllabus
-- `POST /api/ai/explain` — Get adaptive AI explanation for incorrect answers
+- `POST /api/ai/explain` — Get adaptive AI explanation or staged hints (Levels 1–4) for incorrect answers (accepts `question`, `user_answer`, `correct_answer`, `understanding_level`, optional `hint_level` [1–4, default: 4], and optional `learner_attempt`)
+
 
 ---
 

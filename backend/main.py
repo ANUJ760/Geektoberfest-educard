@@ -133,9 +133,11 @@ def explain_answer(req: ExplainRequest):
         req.question,
         req.user_answer,
         req.correct_answer,
-        req.understanding_level
+        req.understanding_level,
+        req.hint_level,
+        req.learner_attempt
     )
-    return {"explanation": explanation}
+    return {"explanation": explanation, "hint_level": req.hint_level}
 
 # Mount static files for frontend if directory exists
 frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
