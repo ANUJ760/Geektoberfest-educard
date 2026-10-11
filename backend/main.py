@@ -8,7 +8,7 @@ from typing import List
 from backend.models import Deck, DeckCreate, Card, Material, GenerateRequest, ExplainRequest
 from backend.storage import load_decks, save_decks, load_materials, save_materials
 from backend.rag import extract_text_from_file, chunk_text
-from backend.ai_service import generate_ai_deck, generate_ai_explanation
+from backend.ai_service import generate_ai_deck, generate_ai_explanation, generate_mindmap
 
 app = FastAPI(title="EduCards API", version="1.0.0")
 
@@ -66,6 +66,14 @@ def add_card_to_deck(deck_id: str, card_data: dict):
             d.cards.append(new_card)
             save_decks(decks)
             return new_card
+    raise HTTPException(status_code=404, detail="Deck not found")
+
+@app.post("/api/decks/{deck_id}/mindmap")
+def get_deck_mindmap(deck_id: str):
+    decks = load_decks()
+    for d in decks:
+        if d.id == deck_id:
+            return generate_mindmap(d)
     raise HTTPException(status_code=404, detail="Deck not found")
 
 @app.get("/api/materials", response_model=List[Material])

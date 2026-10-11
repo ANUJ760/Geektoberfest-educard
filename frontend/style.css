@@ -341,3 +341,8 @@ input:focus, select:focus, textarea:focus {
   border-radius: 4px;
   margin-bottom: 0.75rem;
 }
+
+.mindmap-root-node text,
+.mindmap-child-node text {
+  user-select: none;
+}

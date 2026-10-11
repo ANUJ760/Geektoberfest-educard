@@ -53,6 +53,7 @@ ps_2_gfg/
 - Python 3.10 or higher
 - `pip` package manager
 - (Optional) `GEMINI_API_KEY` environment variable from Google AI Studio. *(Note: If no API key is set, EduCards automatically falls back to deterministic mock decks and canned AI explanations for seamless local development).*
+- (Optional) `GROQ_API_KEY` environment variable from Groq for mindmap generation (`llama-3.3-70b-versatile`). *(Falls back to deterministic mock mindmaps if not set).*
 
 ### Installation
 
@@ -102,6 +103,7 @@ python -m pytest backend/ -v
 - `GET /api/materials` — List uploaded RAG materials
 - `POST /api/materials/upload` — Upload and index a PDF/TXT syllabus
 - `POST /api/ai/explain` — Get adaptive AI explanation for incorrect answers
+- `POST /api/decks/{id}/mindmap` — Generate mindmap for study deck using Gen AI
 
 ---
 
