@@ -78,7 +78,10 @@
     <div id="view-practice" class="view">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <h2 id="practice-deck-title">Practice Deck</h2>
-        <button class="btn btn-secondary" onclick="switchView('decks')">&larr; Back to Decks</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn" id="btn-mindmap" onclick="openMindmap()">Mindmap</button>
+          <button class="btn btn-secondary" onclick="switchView('decks')">&larr; Back to Decks</button>
+        </div>
       </div>
 
       <div class="practice-container">
@@ -157,6 +160,17 @@
       <div class="panel" style="background: #F8FAFC; margin-bottom: 0; padding: 1.25rem;">
         <strong style="display: block; margin-bottom: 0.5rem; color: var(--primary);">AI Tutor Explanation:</strong>
         <p id="explainer-text" style="color: var(--text-primary); white-space: pre-wrap;">Loading explanation...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mindmap Modal -->
+  <div id="mindmap-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px; width: 95%;">
+      <button class="close-btn" onclick="closeMindmapModal()">&times;</button>
+      <h3 id="mindmap-title">Deck Mindmap</h3>
+      <div id="mindmap-container" style="width: 100%; min-height: 460px; display: flex; align-items: center; justify-content: center; overflow: auto;">
+        <p style="color: var(--text-secondary);">Loading mindmap...</p>
       </div>
     </div>
   </div>
