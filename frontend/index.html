@@ -185,17 +185,6 @@
     </div>
   </div>
 
-  <!-- Mindmap Modal -->
-  <div id="mindmap-modal" class="modal">
-    <div class="modal-content" style="max-width: 800px; width: 95%;">
-      <button class="close-btn" onclick="closeMindmapModal()">&times;</button>
-      <h3 id="mindmap-title">Deck Mindmap</h3>
-      <div id="mindmap-container" style="width: 100%; min-height: 460px; display: flex; align-items: center; justify-content: center; overflow: auto;">
-        <p style="color: var(--text-secondary);">Loading mindmap...</p>
-      </div>
-    </div>
-  </div>
-
   <!-- Settings Modal -->
   <div id="settings-modal" class="modal">
     <div class="modal-content">
@@ -210,6 +199,17 @@
           <input type="checkbox" id="settings-think-first" checked onchange="toggleThinkFirst(this.checked)">
           <span>Enabled</span>
         </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mindmap Modal -->
+  <div id="mindmap-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px; width: 95%;">
+      <button class="close-btn" onclick="closeMindmapModal()">&times;</button>
+      <h3 id="mindmap-title">Deck Mindmap</h3>
+      <div id="mindmap-container" style="width: 100%; min-height: 460px; display: flex; align-items: center; justify-content: center; overflow: auto;">
+        <p style="color: var(--text-secondary);">Loading mindmap...</p>
       </div>
     </div>
   </div>
