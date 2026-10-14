@@ -791,4 +791,3 @@ function escapeXml(unsafe) {
     }
   });
 }
-

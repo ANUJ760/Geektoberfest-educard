@@ -60,4 +60,3 @@ class ExplainRequest(BaseModel):
     understanding_level: Literal["ELI5", "Beginner", "Intermediate", "Advanced"] = "Beginner"
     hint_level: int = Field(default=4, ge=1, le=4)
     learner_attempt: Optional[str] = None
-
