@@ -270,16 +270,143 @@ function prevCard() {
   renderCard();
 }
 
+let conversationHistory = [];
+
 function openExplainerModal() {
   if (!currentWrongContext) return;
   resetHintState();
   document.getElementById("explainer-question-title").innerText = currentWrongContext.question;
   document.getElementById("explainer-summary").innerText = `You answered "${currentWrongContext.user_answer}". The correct answer is "${currentWrongContext.correct_answer}".`;
+
+  conversationHistory = [];
+  const badgeEl = document.getElementById("tutor-round-badge");
+  if (badgeEl) {
+    badgeEl.innerText = "Discussion Round 1 of 3";
+    badgeEl.style.background = "#CCFBF1";
+    badgeEl.style.color = "#134E4A";
+  }
+  const replySection = document.getElementById("tutor-reply-section");
+  if (replySection) replySection.style.display = "block";
+  const replyInput = document.getElementById("learner-reply-input");
+  if (replyInput) replyInput.value = "";
+
   document.getElementById("explainer-modal").classList.add("active");
+  fetchAiConversationalTurn();
 }
 
 function closeExplainerModal() {
   document.getElementById("explainer-modal").classList.remove("active");
+}
+
+function restartConversation() {
+  conversationHistory = [];
+  fetchAiConversationalTurn();
+}
+
+function renderDialogue() {
+  const container = document.getElementById("tutor-dialogue-container");
+  if (!container) return;
+
+  if (!conversationHistory.length) {
+    container.innerHTML = `<div id="explainer-text" style="color: var(--text-primary); margin: 0; white-space: pre-wrap;">Consulting tutor...</div>`;
+    return;
+  }
+
+  container.innerHTML = conversationHistory.map(msg => {
+    if (msg.role === "user") {
+      return `
+        <div style="align-self: flex-end; background: #EEF2FF; border-left: 3px solid #6366F1; padding: 0.6rem 0.85rem; border-radius: 6px; max-width: 85%; margin-left: auto;">
+          <strong style="font-size: 0.75rem; color: #4338CA; display: block; text-transform: uppercase;">You:</strong>
+          <span style="font-size: 0.95rem; color: #1E1B4B;">${escapeHtml(msg.content)}</span>
+        </div>
+      `;
+    } else {
+      return `
+        <div style="align-self: flex-start; background: #F8FAFC; border-left: 3px solid var(--accent); padding: 0.6rem 0.85rem; border-radius: 6px; max-width: 90%;">
+          <strong style="font-size: 0.75rem; color: var(--accent); display: block; text-transform: uppercase;">AI Tutor:</strong>
+          <span style="font-size: 0.95rem; color: var(--text-primary); white-space: pre-wrap;">${escapeHtml(msg.content)}</span>
+        </div>
+      `;
+    }
+  }).join("");
+
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendLearnerReply() {
+  const inputEl = document.getElementById("learner-reply-input");
+  const text = inputEl ? inputEl.value.trim() : "";
+  if (!text) return;
+
+  conversationHistory.push({ role: "user", content: text });
+  if (inputEl) inputEl.value = "";
+  renderDialogue();
+
+  await fetchAiConversationalTurn();
+}
+
+async function fetchAiConversationalTurn() {
+  if (!currentWrongContext) return;
+  const level = document.getElementById("understanding-level").value;
+  const replySection = document.getElementById("tutor-reply-section");
+  const badgeEl = document.getElementById("tutor-round-badge");
+  const sendBtn = document.getElementById("btn-send-reply");
+  if (sendBtn) sendBtn.disabled = true;
+
+  try {
+    const res = await fetch("/api/ai/explain", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: currentWrongContext.question,
+        user_answer: currentWrongContext.user_answer,
+        correct_answer: currentWrongContext.correct_answer,
+        understanding_level: level,
+        history: conversationHistory
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      conversationHistory.push({ role: "assistant", content: data.explanation });
+      renderDialogue();
+
+      if (badgeEl) {
+        if (data.is_full_explanation) {
+          badgeEl.innerText = "Full Explanation Reached";
+          badgeEl.style.background = "#DCFCE7";
+          badgeEl.style.color = "#166534";
+        } else {
+          badgeEl.innerText = `Discussion Round ${(data.turn_count || 0) + 1} of 3`;
+          badgeEl.style.background = "#CCFBF1";
+          badgeEl.style.color = "#134E4A";
+        }
+      }
+
+      if (replySection) {
+        replySection.style.display = data.is_full_explanation ? "none" : "block";
+      }
+    } else {
+      conversationHistory.push({ role: "assistant", content: "Unable to connect with AI tutor right now." });
+      renderDialogue();
+    }
+  } catch (err) {
+    console.error("Conversational tutor error", err);
+    conversationHistory.push({ role: "assistant", content: "Error connecting to tutor service." });
+    renderDialogue();
+  } finally {
+    if (sendBtn) sendBtn.disabled = false;
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function resetHintState() {
