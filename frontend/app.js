@@ -430,6 +430,8 @@ function prevCard() {
 function openExplainerModal() {
   if (!currentWrongContext) return;
   resetHintState();
+  resetRestatementUI();
+  showExplainItBackSection();
   document.getElementById("explainer-question-title").innerText = currentWrongContext.question;
   document.getElementById("explainer-summary").innerText = `You answered "${currentWrongContext.user_answer}". The correct answer is "${currentWrongContext.correct_answer}".`;
   document.getElementById("explainer-modal").classList.add("active");
@@ -682,4 +684,90 @@ function escapeXml(unsafe) {
       case '"': return '&quot;';
     }
   });
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function resetRestatementUI() {
+  const container = document.getElementById("explain-it-back-container");
+  if (container) container.style.display = "none";
+  const input = document.getElementById("learner-restatement");
+  if (input) input.value = "";
+  const feedbackBox = document.getElementById("restatement-feedback-box");
+  if (feedbackBox) {
+    feedbackBox.style.display = "none";
+    feedbackBox.innerHTML = "";
+  }
+}
+
+function showExplainItBackSection() {
+  const container = document.getElementById("explain-it-back-container");
+  if (container) container.style.display = "block";
+}
+
+function skipRestatement() {
+  const container = document.getElementById("explain-it-back-container");
+  if (container) {
+    container.innerHTML = `<p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0.5rem 0;"><em>Explain-it-back step skipped.</em></p>`;
+  }
+}
+
+async function submitRestatement() {
+  if (!currentWrongContext) return;
+  const input = document.getElementById("learner-restatement");
+  const restatement = input ? input.value.trim() : "";
+  if (!restatement) {
+    alert("Please write your restatement before submitting, or tap 'Skip this step'.");
+    return;
+  }
+
+  const submitBtn = document.getElementById("btn-submit-restatement");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Analyzing...";
+  }
+
+  try {
+    const res = await fetch("/api/ai/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        concept: currentWrongContext.question,
+        correct_answer: currentWrongContext.correct_answer,
+        learner_restatement: restatement
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const feedbackBox = document.getElementById("restatement-feedback-box");
+      if (feedbackBox) {
+        feedbackBox.style.display = "block";
+        feedbackBox.innerHTML = `
+          <strong style="display: block; color: #4338CA; margin-bottom: 0.5rem;">AI Tutor Critique:</strong>
+          <p style="margin-bottom: 0.5rem; color: #1E1B4B; white-space: pre-wrap;">${escapeHtml(data.feedback)}</p>
+          <div style="font-size: 0.85rem; color: #15803D; margin-bottom: 0.25rem;">&bull; <strong>What you got right:</strong> ${escapeHtml(data.what_was_right)}</div>
+          <div style="font-size: 0.85rem; color: #B45309;">&bull; <strong>To refine:</strong> ${escapeHtml(data.thing_to_refine)}</div>
+        `;
+      }
+    } else {
+      alert("Unable to fetch feedback at this time.");
+    }
+  } catch (err) {
+    console.error("Feedback error", err);
+    alert("Error submitting restatement.");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Submit for Feedback";
+    }
+  }
 }

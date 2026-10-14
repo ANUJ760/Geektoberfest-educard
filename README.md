@@ -124,6 +124,9 @@ python -m pytest backend/ -v
   }
   ```
 - `POST /api/decks/{id}/mindmap` — Generate mindmap for study deck using Gen AI
+- `POST /api/ai/feedback` — Submit a learner's conceptual restatement and receive targeted AI critique (3 sentences or fewer) detailing what was accurate and what to refine.
+  - Parameters: `concept` (str), `correct_answer` (str), `learner_restatement` (str).
+
 
 ---
 

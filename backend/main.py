@@ -5,10 +5,10 @@ from fastapi.responses import FileResponse
 import os
 from typing import List
 
-from backend.models import Deck, DeckCreate, Card, Material, GenerateRequest, ExplainRequest
+from backend.models import Deck, DeckCreate, Card, Material, GenerateRequest, ExplainRequest, FeedbackRequest, FeedbackResponse
 from backend.storage import load_decks, save_decks, load_materials, save_materials
 from backend.rag import extract_text_from_file, chunk_text
-from backend.ai_service import generate_ai_deck, generate_ai_explanation, generate_mindmap
+from backend.ai_service import generate_ai_deck, generate_ai_explanation, generate_mindmap, generate_ai_feedback
 
 app = FastAPI(title="EduCards API", version="1.0.0")
 
@@ -146,6 +146,15 @@ def explain_answer(req: ExplainRequest):
         learner_attempt=req.learner_attempt
     )
     return {"explanation": explanation}
+
+@app.post("/api/ai/feedback", response_model=FeedbackResponse)
+def get_ai_feedback(req: FeedbackRequest):
+    return generate_ai_feedback(
+        req.concept,
+        req.correct_answer,
+        req.learner_restatement
+    )
+
 
 # Mount static files for frontend if directory exists
 frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
