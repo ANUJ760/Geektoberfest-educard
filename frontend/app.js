@@ -6,9 +6,16 @@ let currentWrongContext = null;
 let hintLevel = 0;
 let displayedHints = [];
 
+// Think First (Active Recall) State - Enabled by default
+let thinkFirstEnabled = localStorage.getItem("educard_think_first") !== "false";
+let userRecallAttempt = "";
+let recallAttempted = false;
+let isCardFlipped = false;
+
 document.addEventListener("DOMContentLoaded", () => {
   loadDecks();
   loadMaterials();
+  initSettings();
 });
 
 function switchView(viewName) {
@@ -199,9 +206,20 @@ function renderCard() {
   
   const fcContainer = document.getElementById("flashcard-container");
   const mcqContainer = document.getElementById("mcq-container");
+  const recallGate = document.getElementById("recall-gate");
+  const answerContainer = document.getElementById("fc-answer-container");
+  const hintText = document.getElementById("fc-hint-text");
+  const recallInput = document.getElementById("recall-input");
+  const flipBtn = document.getElementById("btn-flip");
+  
+  // Reset card state
+  isCardFlipped = false;
+  userRecallAttempt = "";
+  recallAttempted = false;
   
   if (card.type === "mcq") {
     fcContainer.style.display = "none";
+    if (recallGate) recallGate.style.display = "none";
     mcqContainer.style.display = "block";
     
     document.getElementById("mcq-question").innerText = card.question;
@@ -215,14 +233,153 @@ function renderCard() {
     mcqContainer.style.display = "none";
     
     fcContainer.classList.remove("revealed");
+    if (answerContainer) answerContainer.style.display = "none";
+    
     document.getElementById("fc-question").innerText = card.question;
     document.getElementById("fc-answer").innerText = card.answer;
+    
+    if (thinkFirstEnabled) {
+      if (recallGate) recallGate.style.display = "block";
+      if (recallInput) recallInput.value = "";
+      if (flipBtn) {
+        flipBtn.disabled = true;
+        flipBtn.innerText = "Flip Card";
+      }
+      if (hintText) hintText.innerText = "(Enter a recall attempt or tap 'I don't know' to enable flip)";
+    } else {
+      if (recallGate) recallGate.style.display = "none";
+      if (flipBtn) {
+        flipBtn.disabled = false;
+        flipBtn.innerText = "Flip Card";
+      }
+      if (hintText) hintText.innerText = "(Click card or 'Flip Card' to reveal answer)";
+    }
+  }
+}
+
+function handleRecallInput(val) {
+  const trimmed = (val || "").trim();
+  const flipBtn = document.getElementById("btn-flip");
+  const hintText = document.getElementById("fc-hint-text");
+  
+  if (trimmed.length > 0) {
+    recallAttempted = true;
+    userRecallAttempt = val.trim();
+    if (flipBtn) flipBtn.disabled = false;
+    if (hintText) hintText.innerText = "(Click card or 'Flip Card' to reveal answer)";
+  } else {
+    recallAttempted = false;
+    userRecallAttempt = "";
+    if (flipBtn) flipBtn.disabled = true;
+    if (hintText) hintText.innerText = "(Enter a recall attempt or tap 'I don't know' to enable flip)";
+  }
+}
+
+function handleRecallKeydown(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    const flipBtn = document.getElementById("btn-flip");
+    if (flipBtn && !flipBtn.disabled) {
+      flipFlashcard();
+    }
+  }
+}
+
+function handleDontKnow() {
+  recallAttempted = true;
+  userRecallAttempt = "I don't know";
+  const recallInput = document.getElementById("recall-input");
+  if (recallInput) recallInput.value = "I don't know";
+  const flipBtn = document.getElementById("btn-flip");
+  if (flipBtn) flipBtn.disabled = false;
+  flipFlashcard();
+}
+
+function handleCardClick() {
+  if (!thinkFirstEnabled) {
+    flipFlashcard();
+  } else {
+    if (recallAttempted || isCardFlipped) {
+      flipFlashcard();
+    } else {
+      const input = document.getElementById("recall-input");
+      if (input) {
+        input.focus();
+        input.style.borderColor = "var(--accent)";
+        setTimeout(() => { input.style.borderColor = ""; }, 400);
+      }
+    }
   }
 }
 
 function flipFlashcard() {
+  // If Think First is enabled and learner has not attempted recall or card isn't flipped yet, disallow
+  if (thinkFirstEnabled && !recallAttempted && !isCardFlipped) {
+    return;
+  }
+  
   const fcContainer = document.getElementById("flashcard-container");
-  fcContainer.classList.toggle("revealed");
+  const answerContainer = document.getElementById("fc-answer-container");
+  const flipBtn = document.getElementById("btn-flip");
+  const userAttemptEl = document.getElementById("fc-user-attempt");
+  const attemptWrapper = document.getElementById("fc-attempt-wrapper");
+  const hintText = document.getElementById("fc-hint-text");
+  
+  isCardFlipped = !isCardFlipped;
+  
+  if (isCardFlipped) {
+    fcContainer.classList.add("revealed");
+    if (answerContainer) answerContainer.style.display = "block";
+    
+    if (thinkFirstEnabled) {
+      if (attemptWrapper) attemptWrapper.style.display = "block";
+      if (userAttemptEl) userAttemptEl.innerText = userRecallAttempt || "(None entered)";
+    } else {
+      if (attemptWrapper) attemptWrapper.style.display = "none";
+    }
+    
+    if (flipBtn) flipBtn.innerText = "Flip Back";
+    if (hintText) hintText.innerText = "(Click card or 'Flip Back' to review question)";
+  } else {
+    fcContainer.classList.remove("revealed");
+    if (answerContainer) answerContainer.style.display = "none";
+    if (flipBtn) flipBtn.innerText = "Flip Card";
+    if (hintText) {
+      hintText.innerText = thinkFirstEnabled && !recallAttempted
+        ? "(Enter a recall attempt or tap 'I don't know' to enable flip)"
+        : "(Click card or 'Flip Card' to reveal answer)";
+    }
+  }
+}
+
+/* Settings Modal & Think First Toggle */
+function initSettings() {
+  const checkbox = document.getElementById("setting-think-first");
+  if (checkbox) {
+    checkbox.checked = thinkFirstEnabled;
+  }
+}
+
+function openSettingsModal() {
+  initSettings();
+  const modal = document.getElementById("settings-modal");
+  if (modal) modal.classList.add("active");
+}
+
+function closeSettingsModal() {
+  const modal = document.getElementById("settings-modal");
+  if (modal) modal.classList.remove("active");
+}
+
+function toggleThinkFirst(checked) {
+  thinkFirstEnabled = Boolean(checked);
+  localStorage.setItem("educard_think_first", thinkFirstEnabled ? "true" : "false");
+  
+  // If user is currently in practice view, re-render current card with new setting
+  const practiceView = document.getElementById("view-practice");
+  if (practiceView && practiceView.classList.contains("active") && currentDeck) {
+    renderCard();
+  }
 }
 
 function checkMcqAnswer(selected, correct, question) {
