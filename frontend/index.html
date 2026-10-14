@@ -13,6 +13,7 @@
       <button onclick="switchView('dashboard')" id="nav-dashboard" class="active">Dashboard</button>
       <button onclick="switchView('decks')" id="nav-decks">Study Decks</button>
       <button onclick="switchView('materials')" id="nav-materials">Upload Materials</button>
+      <button onclick="openSettingsModal()" id="nav-settings">Settings</button>
     </nav>
   </header>
 
@@ -78,8 +79,9 @@
     <div id="view-practice" class="view">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <h2 id="practice-deck-title">Practice Deck</h2>
-        <div style="display: flex; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
           <button class="btn" id="btn-mindmap" onclick="openMindmap()">Mindmap</button>
+          <button class="btn btn-secondary" id="btn-settings-practice" onclick="openSettingsModal()" title="Study Settings">⚙️ Settings</button>
           <button class="btn btn-secondary" onclick="switchView('decks')">&larr; Back to Decks</button>
         </div>
       </div>
@@ -87,10 +89,31 @@
       <div class="practice-container">
         <div id="practice-progress" class="badge">Card 1 of 5</div>
         
-        <div id="flashcard-container" class="flashcard-box" onclick="flipFlashcard()">
+        <div id="flashcard-container" class="flashcard-box" onclick="handleCardClick()">
           <div id="fc-question" class="flashcard-question">Loading question...</div>
-          <div id="fc-answer" class="flashcard-answer">Loading answer...</div>
-          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1rem;">(Click card to reveal answer)</div>
+          <div id="fc-answer-container" style="display: none; width: 100%;">
+            <div id="fc-comparison" class="fc-comparison-grid">
+              <div id="fc-attempt-wrapper" class="fc-attempt-box">
+                <span class="fc-label">Your Attempt</span>
+                <p id="fc-user-attempt" class="fc-attempt-text"></p>
+              </div>
+              <div class="fc-answer-box">
+                <span class="fc-label">Correct Answer</span>
+                <p id="fc-answer" class="flashcard-answer"></p>
+              </div>
+            </div>
+          </div>
+          <div id="fc-hint-text" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1rem;">(Click card or &#39;Flip Card&#39; to reveal answer)</div>
+        </div>
+
+        <!-- Recall Gate Controls (Active Recall) -->
+        <div id="recall-gate" class="recall-gate-box">
+          <label for="recall-input" class="recall-label">Type your recall attempt before flipping:</label>
+          <div class="recall-input-group">
+            <input type="text" id="recall-input" placeholder="Type what you remember..." oninput="handleRecallInput(this.value)" onkeydown="handleRecallKeydown(event)" autocomplete="off">
+            <button type="button" id="btn-dont-know" class="btn btn-secondary" onclick="handleDontKnow()">I don't know</button>
+            <button type="button" id="btn-flip" class="btn" onclick="flipFlashcard()" disabled>Flip Card</button>
+          </div>
         </div>
 
         <div id="mcq-container" style="display: none;">
@@ -175,6 +198,26 @@
       <h3 id="mindmap-title">Deck Mindmap</h3>
       <div id="mindmap-container" style="width: 100%; min-height: 460px; display: flex; align-items: center; justify-content: center; overflow: auto;">
         <p style="color: var(--text-secondary);">Loading mindmap...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Study Settings Modal -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeSettingsModal()">&times;</button>
+      <h3>Study Settings</h3>
+      <div class="settings-list">
+        <div class="setting-item">
+          <div class="setting-info">
+            <strong>Think First (Active Recall)</strong>
+            <p class="subtitle" style="margin-bottom: 0;">Require typing a recall attempt or tapping &quot;I don't know&quot; before flipping flashcards.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-think-first" checked onchange="toggleThinkFirst(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
       </div>
     </div>
   </div>

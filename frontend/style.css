@@ -358,3 +358,181 @@ input:focus, select:focus, textarea:focus {
   margin-bottom: 0;
   padding-bottom: 0;
 }
+
+/* Active Recall Gate & Flashcard Comparison */
+.recall-gate-box {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+  box-shadow: var(--shadow);
+}
+
+.recall-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--primary);
+}
+
+.recall-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.recall-input-group input {
+  flex: 1;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.95rem;
+}
+
+.recall-input-group .btn {
+  white-space: nowrap;
+}
+
+.recall-input-group .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.fc-comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+  text-align: left;
+}
+
+@media (max-width: 600px) {
+  .fc-comparison-grid {
+    grid-template-columns: 1fr;
+  }
+  .recall-input-group {
+    flex-direction: column;
+  }
+  .recall-input-group input,
+  .recall-input-group .btn {
+    width: 100%;
+  }
+}
+
+.fc-attempt-box {
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.fc-answer-box {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.fc-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.35rem;
+}
+
+.fc-answer-box .fc-label {
+  color: #166534;
+}
+
+.fc-attempt-text {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+  word-break: break-word;
+}
+
+.fc-answer-box .flashcard-answer {
+  display: block;
+  margin-top: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #15803D;
+  word-break: break-word;
+}
+
+/* Settings Modal Toggle Switch */
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #F8FAFC;
+  gap: 1rem;
+}
+
+.setting-info strong {
+  display: block;
+  color: var(--primary);
+  margin-bottom: 0.25rem;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #CBD5E1;
+  transition: 0.2s;
+  border-radius: 26px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+  background-color: var(--accent);
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(22px);
+}
