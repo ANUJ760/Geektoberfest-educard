@@ -564,6 +564,10 @@ function escapeHtmlFeedback(str) {
 function resetRestatementUI() {
   const container = document.getElementById("explain-it-back-container");
   if (container) container.style.display = "none";
+  const inputSection = document.getElementById("restatement-input-section");
+  if (inputSection) inputSection.style.display = "block";
+  const skippedMsg = document.getElementById("restatement-skipped-msg");
+  if (skippedMsg) skippedMsg.style.display = "none";
   const input = document.getElementById("learner-restatement");
   if (input) input.value = "";
   const feedbackBox = document.getElementById("restatement-feedback-box");
@@ -579,10 +583,12 @@ function showExplainItBackSection() {
 }
 
 function skipRestatement() {
-  const container = document.getElementById("explain-it-back-container");
-  if (container) {
-    container.innerHTML = `<p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0.5rem 0;"><em>Explain-it-back step skipped.</em></p>`;
-  }
+  const inputSection = document.getElementById("restatement-input-section");
+  const skippedMsg = document.getElementById("restatement-skipped-msg");
+  const feedbackBox = document.getElementById("restatement-feedback-box");
+  if (inputSection) inputSection.style.display = "none";
+  if (feedbackBox) feedbackBox.style.display = "none";
+  if (skippedMsg) skippedMsg.style.display = "block";
 }
 
 async function submitRestatement() {

@@ -56,8 +56,10 @@ def test_frontend_has_explain_it_back_and_skip_option():
     assert response.status_code == 200
     html = response.text
     assert 'id="explain-it-back-container"' in html
+    assert 'id="restatement-input-section"' in html
     assert 'id="learner-restatement"' in html
     assert 'id="btn-submit-restatement"' in html
     assert 'id="btn-skip-restatement"' in html
     assert "Skip this step" in html
+    assert 'id="restatement-skipped-msg"' in html
     assert 'id="restatement-feedback-box"' in html

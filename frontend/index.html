@@ -195,11 +195,14 @@
         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
           To solidify your understanding, restate this concept. The AI tutor will review what you got right and what you can refine.
         </p>
-        <textarea id="learner-restatement" rows="3" placeholder="Restate what you learned in your own words..." style="width: 100%; box-sizing: border-box; margin-bottom: 0.5rem;"></textarea>
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
-          <button type="button" id="btn-submit-restatement" class="btn" onclick="submitRestatement()">Submit for Feedback</button>
-          <button type="button" id="btn-skip-restatement" class="btn btn-secondary" onclick="skipRestatement()">Skip this step</button>
+        <div id="restatement-input-section">
+          <textarea id="learner-restatement" rows="3" placeholder="Restate what you learned in your own words..." style="width: 100%; box-sizing: border-box; margin-bottom: 0.5rem;"></textarea>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button type="button" id="btn-submit-restatement" class="btn" onclick="submitRestatement()">Submit for Feedback</button>
+            <button type="button" id="btn-skip-restatement" class="btn btn-secondary" onclick="skipRestatement()">Skip this step</button>
+          </div>
         </div>
+        <div id="restatement-skipped-msg" style="display: none; color: var(--text-secondary); font-size: 0.9rem; margin: 0.5rem 0;"><em>Explain-it-back step skipped.</em></div>
         <div id="restatement-feedback-box" style="display: none; margin-top: 1rem; padding: 1rem; background: #EEF2FF; border-left: 4px solid #6366F1; border-radius: 6px;"></div>
       </div>
     </div>
