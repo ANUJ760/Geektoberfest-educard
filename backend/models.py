@@ -37,6 +37,16 @@ class Material(BaseModel):
     chunk_count: int = 0
     uploaded_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+class FeedbackRequest(BaseModel):
+    concept: str
+    correct_answer: str
+    learner_restatement: str
+
+class FeedbackResponse(BaseModel):
+    feedback: str
+    what_was_right: str
+    thing_to_refine: str
+
 class GenerateRequest(BaseModel):
     topic: str
     card_type: Literal["flashcard", "mcq", "mixed"] = "flashcard"

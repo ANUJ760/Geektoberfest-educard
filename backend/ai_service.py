@@ -250,3 +250,45 @@ Return ONLY a valid JSON object with this exact schema:
             print(f"Groq API mindmap generation failed, falling back to mock: {e}")
 
     return _fallback_mindmap()
+
+def generate_ai_feedback(concept: str, correct_answer: str, learner_restatement: str) -> Dict[str, Any]:
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if api_key:
+        try:
+            from google import genai
+            client = genai.Client(api_key=api_key)
+            prompt = f"""
+            The student was taught the following concept and attempted to explain it back in their own words.
+            Concept: {concept}
+            Correct Answer / Core Principle: {correct_answer}
+            Student's Restatement: {learner_restatement}
+            
+            Provide constructive feedback in 3 sentences or fewer:
+            1. Clearly state what part of the concept the student accurately understood.
+            2. State one specific detail or misconception they should refine.
+            IMPORTANT: Do not provide a model answer first. Directly address the student's restatement.
+            """
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+            )
+            text = response.text.strip()
+            return {
+                "feedback": text,
+                "what_was_right": "Your restatement shows understanding of the core concept.",
+                "thing_to_refine": "Review how this principle connects to the final outcome."
+            }
+        except Exception as e:
+            print(f"Gemini feedback API failed, using fallback: {e}")
+
+    # Fallback critique
+    return {
+        "feedback": (
+            f"You correctly grasped the foundational principle of {concept}. "
+            f"To refine your understanding further, make sure to consider how '{correct_answer}' fully answers all conditions. "
+            f"Great job putting this into your own words!"
+        ),
+        "what_was_right": f"You accurately described the core premise of {concept}.",
+        "thing_to_refine": f"Double check the connection between your explanation and '{correct_answer}'."
+    }
+

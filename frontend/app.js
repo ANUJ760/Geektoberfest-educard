@@ -551,6 +551,120 @@ function escapeQuote(str) {
   return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
+function escapeHtmlFeedback(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function resetRestatementUI() {
+  const container = document.getElementById("explain-it-back-container");
+  if (container) container.style.display = "none";
+  const inputSection = document.getElementById("restatement-input-section");
+  if (inputSection) inputSection.style.display = "block";
+  const skippedMsg = document.getElementById("restatement-skipped-msg");
+  if (skippedMsg) skippedMsg.style.display = "none";
+  const input = document.getElementById("learner-restatement");
+  if (input) input.value = "";
+  const feedbackBox = document.getElementById("restatement-feedback-box");
+  if (feedbackBox) {
+    feedbackBox.style.display = "none";
+    feedbackBox.innerHTML = "";
+  }
+}
+
+function showExplainItBackSection() {
+  const container = document.getElementById("explain-it-back-container");
+  if (container) container.style.display = "block";
+}
+
+function skipRestatement() {
+  const inputSection = document.getElementById("restatement-input-section");
+  const skippedMsg = document.getElementById("restatement-skipped-msg");
+  const feedbackBox = document.getElementById("restatement-feedback-box");
+  if (inputSection) inputSection.style.display = "none";
+  if (feedbackBox) feedbackBox.style.display = "none";
+  if (skippedMsg) skippedMsg.style.display = "block";
+}
+
+async function submitRestatement() {
+  if (!currentWrongContext) return;
+  const input = document.getElementById("learner-restatement");
+  const restatement = input ? input.value.trim() : "";
+  if (!restatement) {
+    alert("Please write your restatement before submitting, or tap 'Skip this step'.");
+    return;
+  }
+
+  const submitBtn = document.getElementById("btn-submit-restatement");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Analyzing...";
+  }
+
+  try {
+    const res = await fetch("/api/ai/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        concept: currentWrongContext.question,
+        correct_answer: currentWrongContext.correct_answer,
+        learner_restatement: restatement
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const feedbackBox = document.getElementById("restatement-feedback-box");
+      if (feedbackBox) {
+        feedbackBox.style.display = "block";
+        feedbackBox.innerHTML = `
+          <strong style="display: block; color: #4338CA; margin-bottom: 0.5rem;">AI Tutor Critique:</strong>
+          <p style="margin-bottom: 0.5rem; color: #1E1B4B; white-space: pre-wrap;">${escapeHtmlFeedback(data.feedback)}</p>
+          <div style="font-size: 0.85rem; color: #15803D; margin-bottom: 0.25rem;">&bull; <strong>What you got right:</strong> ${escapeHtmlFeedback(data.what_was_right)}</div>
+          <div style="font-size: 0.85rem; color: #B45309;">&bull; <strong>To refine:</strong> ${escapeHtmlFeedback(data.thing_to_refine)}</div>
+        `;
+      }
+    } else {
+      alert("Unable to fetch feedback at this time.");
+    }
+  } catch (err) {
+    console.error("Feedback error", err);
+    alert("Error submitting restatement.");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Submit for Feedback";
+    }
+  }
+}
+
+// Observe explainer modal opening to activate Explain-it-back section
+(function setupExplainItBackObserver() {
+  function attach() {
+    const modal = document.getElementById("explainer-modal");
+    if (!modal) return;
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.attributeName === "class" && modal.classList.contains("active")) {
+          resetRestatementUI();
+          showExplainItBackSection();
+        }
+      }
+    });
+    observer.observe(modal, { attributes: true, attributeFilter: ["class"] });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", attach);
+  } else {
+    attach();
+  }
+})();
+
 function openMindmapForDeck(deckId) {
   currentDeck = currentDecks.find(d => d.id === deckId);
   if (!currentDeck) return;
