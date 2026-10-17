@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 import os
 from typing import List
 
-from backend.models import Deck, DeckCreate, Card, Material, GenerateRequest, ExplainRequest
+from backend.models import Deck, DeckCreate, Card, Material, GenerateRequest, ExplainRequest, ExplainResponse
 from backend.storage import load_decks, save_decks, load_materials, save_materials
 from backend.rag import extract_text_from_file, chunk_text
 from backend.ai_service import generate_ai_deck, generate_ai_explanation, generate_mindmap
@@ -137,17 +137,18 @@ def generate_deck(req: GenerateRequest):
     save_decks(decks)
     return new_deck
 
-@app.post("/api/ai/explain")
+@app.post("/api/ai/explain", response_model=ExplainResponse)
 def explain_answer(req: ExplainRequest):
-    explanation = generate_ai_explanation(
+    result = generate_ai_explanation(
         req.question,
         req.user_answer,
         req.correct_answer,
         req.understanding_level,
         hint_level=req.hint_level,
-        learner_attempt=req.learner_attempt
+        learner_attempt=req.learner_attempt,
+        history=req.history
     )
-    return {"explanation": explanation}
+    return result
 
 # Mount static files for frontend if directory exists
 frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")

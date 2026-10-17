@@ -53,6 +53,10 @@ class GenerateRequest(BaseModel):
     count: int = 5
     material_id: Optional[str] = None
 
+class ConversationTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
 class ExplainRequest(BaseModel):
     question: str
     user_answer: str
@@ -60,3 +64,10 @@ class ExplainRequest(BaseModel):
     understanding_level: Literal["ELI5", "Beginner", "Intermediate", "Advanced"] = "Beginner"
     hint_level: int = Field(default=4, ge=1, le=4)
     learner_attempt: Optional[str] = None
+    history: Optional[List[ConversationTurn]] = None
+
+class ExplainResponse(BaseModel):
+    explanation: str
+    is_full_explanation: bool = False
+    turn_count: int = 0
+
