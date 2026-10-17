@@ -102,8 +102,8 @@ python -m pytest backend/ -v
 - `POST /api/decks/generate` — Generate study deck using Gen AI & RAG
 - `GET /api/materials` — List uploaded RAG materials
 - `POST /api/materials/upload` — Upload and index a PDF/TXT syllabus
-- `POST /api/ai/explain` — Get adaptive AI explanation or staged hint ladder for incorrect answers.
-  - Parameters: `question` (str), `user_answer` (str), `correct_answer` (str), `understanding_level` (str, default `"Beginner"`), `hint_level` (int 1-4, default `4`), `learner_attempt` (str, optional).
+- `POST /api/ai/explain` — Get adaptive AI explanation, conversational tutor turn, or staged hint ladder for incorrect answers.
+  - Parameters: `question` (str), `user_answer` (str), `correct_answer` (str), `understanding_level` (str, default `"Beginner"`), `hint_level` (int 1-4, default `4`), `learner_attempt` (str, optional), `history` (list of `{"role": "user"|"assistant", "content": "..."}` turns, optional).
 
   | hint_level | Content |
   |---|---|
@@ -124,6 +124,9 @@ python -m pytest backend/ -v
   }
   ```
 - `POST /api/decks/{id}/mindmap` — Generate mindmap for study deck using Gen AI
+- `POST /api/ai/feedback` — Submit a learner's conceptual restatement and receive targeted AI critique (3 sentences or fewer) detailing what was accurate and what to refine.
+  - Parameters: `concept` (str), `correct_answer` (str), `learner_restatement` (str).
+
 
 ---
 

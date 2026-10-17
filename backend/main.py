@@ -5,10 +5,12 @@ from fastapi.responses import FileResponse
 import os
 from typing import List
 
-from backend.models import Deck, DeckCreate, Card, Material, GenerateRequest, ExplainRequest
+from backend.models import Deck, DeckCreate, Card, Material, GenerateRequest, ExplainRequest, ExplainResponse
 from backend.storage import load_decks, save_decks, load_materials, save_materials
 from backend.rag import extract_text_from_file, chunk_text
 from backend.ai_service import generate_ai_deck, generate_ai_explanation, generate_mindmap
+from backend.models import FeedbackRequest, FeedbackResponse
+from backend.ai_service import generate_ai_feedback
 
 app = FastAPI(title="EduCards API", version="1.0.0")
 
@@ -135,17 +137,18 @@ def generate_deck(req: GenerateRequest):
     save_decks(decks)
     return new_deck
 
-@app.post("/api/ai/explain")
+@app.post("/api/ai/explain", response_model=ExplainResponse)
 def explain_answer(req: ExplainRequest):
-    explanation = generate_ai_explanation(
+    result = generate_ai_explanation(
         req.question,
         req.user_answer,
         req.correct_answer,
         req.understanding_level,
         hint_level=req.hint_level,
-        learner_attempt=req.learner_attempt
+        learner_attempt=req.learner_attempt,
+        history=req.history
     )
-    return {"explanation": explanation}
+    return result
 
 # Mount static files for frontend if directory exists
 frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
@@ -155,3 +158,12 @@ if os.path.exists(frontend_dir):
         return FileResponse(os.path.join(frontend_dir, "index.html"))
     
     app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
+
+@app.post("/api/ai/feedback", response_model=FeedbackResponse)
+def get_ai_feedback(req: FeedbackRequest):
+    return generate_ai_feedback(
+        req.concept,
+        req.correct_answer,
+        req.learner_restatement
+    )
+

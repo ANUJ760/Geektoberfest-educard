@@ -108,54 +108,135 @@ def generate_ai_explanation(
     correct_answer: str,
     understanding_level: str,
     hint_level: int = 4,
-    learner_attempt: Optional[str] = None
-) -> str:
+    learner_attempt: Optional[str] = None,
+    history: Optional[List[Any]] = None
+) -> Dict[str, Any]:
+    is_conversational = (history is not None)
+    user_turns = []
+    if is_conversational:
+        for turn in history:
+            role = turn.role if hasattr(turn, 'role') else (turn.get('role') if isinstance(turn, dict) else None)
+            content = turn.content if hasattr(turn, 'content') else (turn.get('content') if isinstance(turn, dict) else None)
+            if role == "user":
+                user_turns.append(content)
+        round_count = len(user_turns)
+        is_full = (round_count >= 3)
+    else:
+        round_count = 0
+        is_full = (hint_level == 4)
+
     api_key = os.environ.get("GEMINI_API_KEY")
     if api_key:
         try:
             from google import genai
             client = genai.Client(api_key=api_key)
-            attempt_line = f"\nLearner's Attempt: {learner_attempt.strip()}" if (learner_attempt and learner_attempt.strip()) else ""
-            if hint_level == 4:
+            if is_conversational:
+                formatted_history = "\n".join([
+                    f"{t.role if hasattr(t, 'role') else t.get('role')}: {t.content if hasattr(t, 'content') else t.get('content')}"
+                    for t in history[-4:]
+                ])
+                if is_full:
+                    prompt_instruction = f"""
+                    Round limit reached ({round_count} rounds completed).
+                    Do NOT ask any further questions.
+                    Provide the full, complete explanation of why '{user_answer}' is incorrect and why '{correct_answer}' is the correct answer.
+                    """
+                else:
+                    prompt_instruction = f"""
+                    Current round: {round_count + 1} of 3.
+                    Ask AT MOST ONE short question back to the learner checking their understanding before giving the final answer.
+                    Do not give away the final correct answer yet.
+                    """
                 prompt = f"""
-            The student answered a study question incorrectly.
-            Question: {question}
-            Student's Answer: {user_answer}{attempt_line}
-            Correct Answer: {correct_answer}
-            Target Understanding Level: {understanding_level} (e.g. ELI5 = Explain like I am 5, Beginner, Intermediate, Advanced)
-            
-            Provide a clear, encouraging explanation addressing:
-            1. Why the student's answer ({user_answer}) is incorrect.
-            2. What the correct answer ({correct_answer}) is and why.
-            3. Explained tailored precisely to the '{understanding_level}' level.
-            """
+                The student is working on a study question with an interactive tutor.
+                Question: {question}
+                Student Initial Answer: {user_answer}
+                Correct Answer: {correct_answer}
+                Target Level: {understanding_level}
+                
+                Conversation History:
+                {formatted_history}
+                
+                Instruction:
+                {prompt_instruction}
+                """
             else:
-                instruction = HINT_INSTRUCTIONS.get(hint_level, "")
-                prompt = f"""
-            The student answered a study question incorrectly.
-            Question: {question}
-            Student's Answer: {user_answer}{attempt_line}
-            Correct Answer: {correct_answer}
-            Target Understanding Level: {understanding_level} (e.g. ELI5 = Explain like I am 5, Beginner, Intermediate, Advanced)
-            
-            Instruction: {instruction}
-            Never reveal, state, or paraphrase the correct answer.
-            Explain tailored precisely to the '{understanding_level}' level.
-            """
+                attempt_line = f"\nLearner's Attempt: {learner_attempt.strip()}" if (learner_attempt and learner_attempt.strip()) else ""
+                if hint_level == 4:
+                    prompt = f"""
+                The student answered a study question incorrectly.
+                Question: {question}
+                Student's Answer: {user_answer}{attempt_line}
+                Correct Answer: {correct_answer}
+                Target Understanding Level: {understanding_level} (e.g. ELI5 = Explain like I am 5, Beginner, Intermediate, Advanced)
+                
+                Provide a clear, encouraging explanation addressing:
+                1. Why the student's answer ({user_answer}) is incorrect.
+                2. What the correct answer ({correct_answer}) is and why.
+                3. Explained tailored precisely to the '{understanding_level}' level.
+                """
+                else:
+                    instruction = HINT_INSTRUCTIONS.get(hint_level, "")
+                    prompt = f"""
+                The student answered a study question incorrectly.
+                Question: {question}
+                Student's Answer: {user_answer}{attempt_line}
+                Correct Answer: {correct_answer}
+                Target Understanding Level: {understanding_level} (e.g. ELI5 = Explain like I am 5, Beginner, Intermediate, Advanced)
+                
+                Instruction: {instruction}
+                Never reveal, state, or paraphrase the correct answer.
+                Explain tailored precisely to the '{understanding_level}' level.
+                """
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=prompt,
             )
             text = response.text.strip()
-            if 1 <= hint_level <= 3 and correct_answer and correct_answer.strip():
+            if not is_conversational and 1 <= hint_level <= 3 and correct_answer and correct_answer.strip():
                 if correct_answer.strip().lower() in text.lower():
-                    return _get_canned_explanation(question, user_answer, correct_answer, understanding_level, hint_level)
-            return text
+                    text = _get_canned_explanation(question, user_answer, correct_answer, understanding_level, hint_level)
+            return {
+                "explanation": text,
+                "is_full_explanation": is_full,
+                "turn_count": round_count
+            }
         except Exception as e:
             print(f"Gemini explain API failed, using fallback: {e}")
 
     # Fallback explanation
-    return _get_canned_explanation(question, user_answer, correct_answer, understanding_level, hint_level)
+    if is_conversational:
+        if is_full:
+            explanation = (
+                f"At a {understanding_level} level: After 3 guided rounds, here is the full explanation: "
+                f"Your initial answer '{user_answer}' was incorrect. The correct answer is '{correct_answer}'. "
+                f"EduCards AI notes that '{correct_answer}' satisfies all conditions of '{question}'."
+            )
+        elif round_count == 0:
+            explanation = (
+                f"Hint & Question 1 of 3: Consider the core mechanism of '{question}'. "
+                f"What do you think is the initial factor that takes place?"
+            )
+        elif round_count == 1:
+            last_reply = user_turns[-1] if user_turns else ""
+            explanation = (
+                f"Hint & Question 2 of 3: Regarding your thought '{last_reply}', "
+                f"which specific principle distinguishes that from other possibilities?"
+            )
+        else: # round_count == 2
+            last_reply = user_turns[-1] if user_turns else ""
+            explanation = (
+                f"Hint & Question 3 of 3: Good progress on '{last_reply}'. "
+                f"How does that connect directly to the final result?"
+            )
+    else:
+        explanation = _get_canned_explanation(question, user_answer, correct_answer, understanding_level, hint_level)
+
+    return {
+        "explanation": explanation,
+        "is_full_explanation": is_full,
+        "turn_count": round_count
+    }
 
 def generate_mindmap(deck: Any) -> Dict[str, Any]:
     deck_title = getattr(deck, "title", None) or (deck.get("title") if isinstance(deck, dict) else "Study Deck")
@@ -250,3 +331,45 @@ Return ONLY a valid JSON object with this exact schema:
             print(f"Groq API mindmap generation failed, falling back to mock: {e}")
 
     return _fallback_mindmap()
+
+def generate_ai_feedback(concept: str, correct_answer: str, learner_restatement: str) -> Dict[str, Any]:
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if api_key:
+        try:
+            from google import genai
+            client = genai.Client(api_key=api_key)
+            prompt = f"""
+            The student was taught the following concept and attempted to explain it back in their own words.
+            Concept: {concept}
+            Correct Answer / Core Principle: {correct_answer}
+            Student's Restatement: {learner_restatement}
+            
+            Provide constructive feedback in 3 sentences or fewer:
+            1. Clearly state what part of the concept the student accurately understood.
+            2. State one specific detail or misconception they should refine.
+            IMPORTANT: Do not provide a model answer first. Directly address the student's restatement.
+            """
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+            )
+            text = response.text.strip()
+            return {
+                "feedback": text,
+                "what_was_right": "Your restatement shows understanding of the core concept.",
+                "thing_to_refine": "Review how this principle connects to the final outcome."
+            }
+        except Exception as e:
+            print(f"Gemini feedback API failed, using fallback: {e}")
+
+    # Fallback critique
+    return {
+        "feedback": (
+            f"You correctly grasped the foundational principle of {concept}. "
+            f"To refine your understanding further, make sure to consider how '{correct_answer}' fully answers all conditions. "
+            f"Great job putting this into your own words!"
+        ),
+        "what_was_right": f"You accurately described the core premise of {concept}.",
+        "thing_to_refine": f"Double check the connection between your explanation and '{correct_answer}'."
+    }
+
